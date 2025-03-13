@@ -6,7 +6,7 @@ app.use(express.json());
 
 
 app.get("/",(req,res)=>{
-    res.json({message : "Hello from Backend server"})
+    res.json({message : "Hello from Backend server , How are you?"})
 })
 
 
