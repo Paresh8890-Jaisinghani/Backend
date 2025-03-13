@@ -1,11 +1,11 @@
 const express = require("express")
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3002;
 
 const app = express()
 app.use(express.json());
 
 
-app.get("/",(req,res)=>{
+app.get("/kaizen",(req,res)=>{
     res.json({message : "Hello from Backend server , How are you?"})
 })
 
