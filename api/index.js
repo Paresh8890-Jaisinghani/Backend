@@ -26,15 +26,25 @@ app.post('/authenticate', async (req, res) => {
 
     try {
         const user = await Authmodel.findOne({ username, password });
+
         if (user) {
-            res.json({ success: true, message: "Authentication successful" });
+            // Update the company field in the database
+            const updatedUser = await Authmodel.findByIdAndUpdate(
+                user._id,
+                { company: user.company }, // Keep the company field as it is in the database
+                { new: true } // Return the updated document
+            );
+
+            console.log("Updated company:", updatedUser.company);
+            res.json({ success: true, message: "Authentication successful", company: updatedUser.company });
         } else {
             res.status(401).json({ success: false, message: "Invalid username or password" });
         }
     } catch (err) {
-        res.status(500).json({ success: false, message: "Internal server error" });
+        res.status(500).json({ success: false, message: "Internal server error", error: err.message });
     }
 });
+
 
 // Get all Kaizen entries
 app.get('/kaizens', async (req, res) => {
@@ -48,4 +58,4 @@ app.get('/kaizens', async (req, res) => {
 
 // Start server
 
-app.listen(PORT2,() => console.log(`Server is running on PORT ${PORT2}`));
+app.listen(PORT2, () => console.log(`Server is running on PORT ${PORT2}`));
