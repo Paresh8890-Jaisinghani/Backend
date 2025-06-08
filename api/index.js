@@ -56,6 +56,4 @@ app.get('/kaizens', async (req, res) => {
     }
 });
 
-// Start server
-
 app.listen(PORT2, () => console.log(`Server is running on PORT ${PORT2}`));
