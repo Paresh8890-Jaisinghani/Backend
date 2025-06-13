@@ -1,13 +1,22 @@
+
+require('dotenv').config({ path: '../.env' }); // Adjust path as needed
+
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const Authmodel = require('./authmodel.js'); // Ensure this path is correct
+const jwt = require('jsonwebtoken');
+const secretKey = process.env.SESSION_SECRET
 const PORT2 = process.env.PORT2 || 3003;
-const URL1 = "mongodb+srv://ce21btech11031:nXJLf1WSAOywUoI2@cluster0.dpct2.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0" || process.env.URL1
+const URL1 = process.env.URL1;
+
+const session = require('express-session');
 
 const app = express();
 app.use(cors());
+
 app.use(express.json());
+
 
 // Connect to MongoDB
 try {
@@ -22,21 +31,25 @@ try {
 
 // Authenticate endpoint
 app.post('/authenticate', async (req, res) => {
+
     const { username, password } = req.body;
 
     try {
         const user = await Authmodel.findOne({ username, password });
 
         if (user) {
-            // Update the company field in the database
-            const updatedUser = await Authmodel.findByIdAndUpdate(
-                user._id,
-                { company: user.company }, // Keep the company field as it is in the database
-                { new: true } // Return the updated document
+            const token = jwt.sign(
+                { userId: user._id, username: user.username },
+                secretKey,
+                { expiresIn: '1h' }
             );
 
-            console.log("Updated company:", updatedUser.company);
-            res.json({ success: true, message: "Authentication successful", company: updatedUser.company });
+            res.json({
+                success: true,
+                message: "Authentication successful",
+                token,
+                company: user.company
+            });
         } else {
             res.status(401).json({ success: false, message: "Invalid username or password" });
         }
@@ -45,15 +58,36 @@ app.post('/authenticate', async (req, res) => {
     }
 });
 
+function verifyToken(req, res, next) {
+    const token = req.headers['authorization'];
+
+    if (!token) {
+        return res.status(403).json({ success: false, message: "No token provided" });
+    }
+
+    jwt.verify(token, secretKey, (err, decoded) => {
+        if (err) {
+            return res.status(401).json({ success: false, message: "Invalid token" });
+        }
+
+        req.user = decoded; // Attach user info to request
+        next();
+    });
+}
+
+
+
 
 // Get all Kaizen entries
-app.get('/kaizens', async (req, res) => {
+app.get('/kaizens', verifyToken, async (req, res) => {
     try {
-        const kaizens = await Authmodel.find(); // Adjust the model if `Authmodel` is not for Kaizens
+        const kaizens = await Authmodel.find();
         res.json({ success: true, data: kaizens });
     } catch (err) {
         res.status(500).json({ success: false, message: "Failed to fetch Kaizen entries", error: err.message });
     }
 });
+
+
 
 app.listen(PORT2, () => console.log(`Server is running on PORT ${PORT2}`));
