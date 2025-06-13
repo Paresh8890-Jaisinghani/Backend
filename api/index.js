@@ -41,7 +41,7 @@ app.post('/authenticate', async (req, res) => {
             const token = jwt.sign(
                 { userId: user._id, username: user.username },
                 secretKey,
-                { expiresIn: '1h' }
+                { expiresIn: '20s' }
             );
 
             res.json({
